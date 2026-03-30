@@ -76,3 +76,21 @@ aws ec2 run-instances \
     --user-data file://user_data.sh \
     --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=VictimServer}]'
 ```
+### Step 6: Retrieve Public IP 
+
+Fetched the assigned Public IP address to validate the deployment.
+
+```bash
+aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=VictimServer" "Name=instance-state-name,Values=running" \
+    --query 'Reservations[*].Instances[*].PublicIpAddress' \
+    --output text
+```
+
+## Validation & Testing
+
+To verify that the outcome is working as expected:
+
+- I copied the Public IP address generated from step 6.
+- I pasted the IP address into a standard web browser over HTTP (e.g., http://54.210.xx.xx).
+- The custom "Victim Web Server Running" HTML page loaded successfully, proving that the EC2 instance booted, the User       Data script executed successfully, and the Security Group is correctly allowing Port 80 traffic.
