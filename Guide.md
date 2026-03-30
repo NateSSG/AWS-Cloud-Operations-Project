@@ -113,3 +113,10 @@ To verify that the outcome is working as expected:
 <img width="1272" height="856" alt="image" src="https://github.com/user-attachments/assets/b7455d96-24d7-49da-bb20-54071f009e71" />
 
 
+<img width="2551" height="838" alt="image" src="https://github.com/user-attachments/assets/f8981953-d547-4828-8031-70f246341bd3" />
+
+<img width="2255" height="378" alt="image" src="https://github.com/user-attachments/assets/66bcbcd1-8f31-4477-a0ef-e86aa44ec913" />
+
+<img width="2559" height="635" alt="image" src="https://github.com/user-attachments/assets/8dee1fca-3939-424a-80b9-4bcad4552638" />
+
+<img width="2236" height="793" alt="image" src="https://github.com/user-attachments/assets/0ff62800-6bf0-4fe0-bea5-e79588edfc3d" />
