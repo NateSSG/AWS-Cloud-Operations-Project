@@ -127,7 +127,6 @@ aws sns subscribe \
     --protocol email \
     --notification-endpoint my-email@example.com
 ```
-### Step 2
 <img width="943" height="410" alt="image" src="https://github.com/user-attachments/assets/d38ce620-93fa-49d2-a634-341afd35af8f" />
 
 
@@ -197,6 +196,10 @@ aws ssm send-command \
 
 ### Issue: Logs not appearing in CloudWatch
 
+<img width="1274" height="810" alt="image" src="https://github.com/user-attachments/assets/336f6997-9159-40c7-bc73-be6207b5c08c" />
+
+<img width="1272" height="856" alt="image" src="https://github.com/user-attachments/assets/b7455d96-24d7-49da-bb20-54071f009e71" />
+
 - What went wrong? After deploying the CloudWatch Agent, the SSH-BruteForce-Alert alarm remained in the INSUFFICIENT_DATA state.
 
 - How did I diagnose the issue? I opened the CloudWatch Log Management console and inspected the "/var/log/secure log" group. The group existed, but there were zero log events populated inside it, despite the EC2 instance running and the agent being active.
@@ -211,15 +214,21 @@ aws ssm send-command \
     --document-name "AWS-RunShellScript" \
     --parameters 'commands=["yum install -y rsyslog","systemctl start rsyslog","systemctl enable rsyslog","systemctl restart sshd"]'
 ```
+## Validation & Testing
 
+To verify the Intrustion Detection System was fully operational, I simulated and external brute-force attack from my laptop.
 
-<img width="667" height="638" alt="image" src="https://github.com/user-attachments/assets/ffd437dc-7c9a-4da9-b910-35634cf4aed9" />
+<img width="1191" height="527" alt="bruteforce" src="https://github.com/user-attachments/assets/0a68515f-a3af-42bc-8750-bf69acbfb907" />
 
+- From my laptop (simulating the attacker), i repeatedly attempted to SSH into the EC2 instance using an invalid username  (ssh hacker@<PUBLIC_IP>) and random passwords.
 
-<img width="1274" height="810" alt="image" src="https://github.com/user-attachments/assets/336f6997-9159-40c7-bc73-be6207b5c08c" />
+- I executed this 5 times in rapid succession to deliberately breach the alarm threshold of "3 attempts per minute".
 
-<img width="1272" height="856" alt="image" src="https://github.com/user-attachments/assets/b7455d96-24d7-49da-bb20-54071f009e71" />
+- I monitored the CloudWatch dashboard, observing the logs populate in real-time, and watched the alarm state shift from "OK" to "In alarm".
 
+- Shortly after, I received the automated SNS email alert detailing the breach.
+
+<img width="951" height="724" alt="image" src="https://github.com/user-attachments/assets/d3ab4cb3-fa99-44ac-b4a4-82642eaab3f9" />
 
 <img width="2551" height="838" alt="image" src="https://github.com/user-attachments/assets/f8981953-d547-4828-8031-70f246341bd3" />
 
@@ -227,8 +236,5 @@ aws ssm send-command \
 
 <img width="2559" height="635" alt="image" src="https://github.com/user-attachments/assets/8dee1fca-3939-424a-80b9-4bcad4552638" />
 
-<img width="2236" height="793" alt="image" src="https://github.com/user-attachments/assets/0ff62800-6bf0-4fe0-bea5-e79588edfc3d" />
-
-<img width="1191" height="527" alt="bruteforce" src="https://github.com/user-attachments/assets/0a68515f-a3af-42bc-8750-bf69acbfb907" />
-
 <img width="2559" height="797" alt="image" src="https://github.com/user-attachments/assets/fb7cf98d-b67d-416d-825c-d265cd713c53" />
+
