@@ -1,4 +1,6 @@
-# Phase 1: Victim Web Server Deployment (Intrusion Detection System Project)
+# 
+
+## Phase 1: Victim Web Server Deployment (Intrusion Detection System Project)
 
 ## 1. Introduction & Goal
 The goal of Phase 1 is to deploy the baseline "victim" infrastructure for an Automated Intrusion Detection System (IDS). We are setting up a simple, intentionally accessible web server using Amazon EC2. This server will act as the target for simulated attacks (like SSH brute-forcing) in Phase 2, allowing us to build automated detection and response mechanisms around it.
