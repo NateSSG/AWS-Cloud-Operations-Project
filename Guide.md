@@ -240,3 +240,7 @@ To verify the Intrustion Detection System was fully operational, I simulated and
 
 <img width="2559" height="797" alt="image" src="https://github.com/user-attachments/assets/fb7cf98d-b67d-416d-825c-d265cd713c53" />
 
+## Sources
+- <a href="https://docs.aws.amazon.com/cli/latest/">AWS CLI commands</a>
+- <a href="https://docs.aws.amazon.com/">AWS Docs</a>
+- <a href="https://awsacademy.instructure.com/courses/149546/modules">AWS Academy Materials</a>
