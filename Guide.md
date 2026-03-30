@@ -108,4 +108,8 @@ To verify that the outcome is working as expected:
 <img width="667" height="638" alt="image" src="https://github.com/user-attachments/assets/ffd437dc-7c9a-4da9-b910-35634cf4aed9" />
 
 
+<img width="1274" height="810" alt="image" src="https://github.com/user-attachments/assets/336f6997-9159-40c7-bc73-be6207b5c08c" />
+
+<img width="1272" height="856" alt="image" src="https://github.com/user-attachments/assets/b7455d96-24d7-49da-bb20-54071f009e71" />
+
 
