@@ -97,3 +97,9 @@ To verify that the outcome is working as expected:
 
 <img width="1275" height="974" alt="image" src="https://github.com/user-attachments/assets/b6f0ade2-17b3-44e1-864d-79d3ff44a4df" />
 
+<img width="1161" height="909" alt="image" src="https://github.com/user-attachments/assets/15330f6d-3920-4d0f-845f-aa2a3de3bb31" />
+
+
+<img width="943" height="410" alt="image" src="https://github.com/user-attachments/assets/d38ce620-93fa-49d2-a634-341afd35af8f" />
+
+
