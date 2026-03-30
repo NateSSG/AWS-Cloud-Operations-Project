@@ -99,7 +99,35 @@ To verify that the outcome is working as expected:
 
 <img width="1161" height="909" alt="image" src="https://github.com/user-attachments/assets/15330f6d-3920-4d0f-845f-aa2a3de3bb31" />
 
+# Phase 2: Cloud Governance and Monitoring (Intrusion Detection System)
 
+## 1. Introduction & Goal
+The goal of Phase 2 is to wrap our vulnerable Phase 1 architecture in a layer of Cloud Governance and Security Monitoring. We are implementing an automated log analysis pipeline that detects unauthorized access attempts (SSH brute-forcing) and alerts the administrator in real-time using AWS native services.
+
+## 2. Architecture & Resources Created
+* **Amazon CloudWatch Log Group:** Centralized storage for the EC2 instance's OS-level security logs (`/var/log/secure`).
+* **Amazon CloudWatch Metric Filter:** A custom monitoring rule that scans incoming logs in real-time for the string `"Invalid user"`.
+* **Amazon CloudWatch Alarm:** A threshold monitor (`SSH-BruteForce-Alert`) configured to trigger if 3 or more failed login attempts occur within a 60-second window.
+* **Amazon SNS (Simple Notification Service):** A notification topic (`SecurityAlerts`) that emails the administrator when the CloudWatch Alarm enters the "In Alarm" state.
+* **AWS Systems Manager (SSM):** Used to remotely configure and manage the CloudWatch Agent and OS packages on the EC2 instance without requiring manual SSH access.
+
+---
+
+## 3. Step-by-Step Implementation (AWS CLI)
+
+All governance and monitoring infrastructure was deployed via the AWS CLI in CloudShell.
+
+### Step 1: Create the Alerting System (SNS)
+Created an SNS Topic and subscribed an administrator email address to receive security alerts.
+```bash
+TOPIC_ARN=$(aws sns create-topic --name SecurityAlerts --query 'TopicArn' --output text)
+
+aws sns subscribe \
+    --topic-arn $TOPIC_ARN \
+    --protocol email \
+    --notification-endpoint my-email@example.com
+```
+### Step 2
 <img width="943" height="410" alt="image" src="https://github.com/user-attachments/assets/d38ce620-93fa-49d2-a634-341afd35af8f" />
 
 
