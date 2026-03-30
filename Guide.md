@@ -153,5 +153,79 @@ aws sns subscribe \
 
 <img width="2559" height="797" alt="image" src="https://github.com/user-attachments/assets/fb7cf98d-b67d-416d-825c-d265cd713c53" />
 
+### Step 2: Establish Centralized Logging
 
+Created a CloudWatch Log Group to catch the authentication logs.
 
+```bash
+aws logs create-log-group --log-group-name /var/log/secure
+```
+
+### Step 3: Create the intrustion Detection Metric
+
+Configured a metric filter to count occurences of "Invalid user" (which indicates a failed SSH login attempt with a non-existent username).
+
+```bash
+aws logs put-metric-filter \
+  --log-group-name /var/log/secure \
+  --filter-name "FailedSSHFilter" \
+  --filter-pattern '"Invalid user"' \
+  --metric-transformations \
+      metricName=FailedSSHLogins,metricNamespace=SecurityMetrics,metricValue=1,defaultValue=0
+```
+### Step 4: Create the Security Alarm
+
+Set the threshold to trigger if the attacker fails 3 times within 1 minute.
+
+```bash
+aws cloudwatch put-metric-alarm \
+    --alarm-name "SSH-BruteForce-Alert" \
+    --alarm-description "Triggers on 3+ failed SSH logins in 1 min." \
+    --metric-name FailedSSHLogins \
+    --namespace SecurityMetrics \
+    --statistic Sum \
+    --period 60 \
+    --threshold 3 \
+    --comparison-operator GreaterThanOrEqualToThreshold \
+    --evaluation-periods 1 \
+    --alarm-actions $TOPIC_ARN \
+    --treat-missing-data notBreaching
+```
+
+### Step 5: Configure and Start the CloudWatch Agent
+
+Used AWS Systems Manager Parameter Store to define the agent's configuration, then sent a remote command to the EC2 instance to apply the configuration and restart the agent.
+
+```bash
+# 1. Store the Configuration
+aws ssm put-parameter \
+    --name "AmazonCloudWatch-IDS-Config" \
+    --type "String" \
+    --value '{"logs": {"logs_collected": {"files": {"collect_list": [{"file_path": "/var/log/secure","log_group_name": "/var/log/secure","log_stream_name": "{instance_id}"}]}}}}' \
+    --overwrite
+
+# 2. Deploy to the EC2 Instance
+aws ssm send-command \
+    --targets "Key=tag:Name,Values=VictimServer" \
+    --document-name "AmazonCloudWatch-ManageAgent" \
+    --parameters '{"action":["configure"],"mode":["ec2"],"optionalConfigurationSource":["ssm"],"optionalConfigurationLocation":["AmazonCloudWatch-IDS-Config"],"optionalRestart":["yes"]}'
+```
+
+## Troubleshooting & Learnings
+
+### Issue: Logs not appearing in CloudWatch
+
+- What went wrong? After deploying the CloudWatch Agent, the SSH-BruteForce-Alert alarm remained in the INSUFFICIENT_DATA state.
+
+- How did I diagnose the issue? I opened the CloudWatch Log Management console and inspected the "/var/log/secure log" group. The group existed, but there were zero log events populated inside it, despite the EC2 instance running and the agent being active.
+
+- What steps were taken to fix it? Upon researching the AMI used in Phase 1 (Amazon Linux 2023), I discovered that AWS removed the "rsyslog" service by default in this OS version. Therefore, the OS was not actually writing authentication attemps to the /var/log/secure file for the agent to read.
+
+- The Fix. I used AWS Systems Manager (SSM) RunShellScript to remotely install, enable and start the missing rsyslog service, and restarted the SSH daemon, entirely bypassing the need to SSH into the machine manually.
+
+```bash
+aws ssm send-command \
+    --targets "Key=tag:Name,Values=VictimServer" \
+    --document-name "AWS-RunShellScript" \
+    --parameters 'commands=["yum install -y rsyslog","systemctl start rsyslog","systemctl enable rsyslog","systemctl restart sshd"]'
+```
