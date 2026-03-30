@@ -92,5 +92,8 @@ aws ec2 describe-instances \
 To verify that the outcome is working as expected:
 
 - I copied the Public IP address generated from step 6.
-- I pasted the IP address into a standard web browser over HTTP (e.g., http://54.210.xx.xx).
+- I pasted the IP address into a standard web browser over HTTP (e.g., http://3.93.167.231).
 - The custom "Victim Web Server Running" HTML page loaded successfully, proving that the EC2 instance booted, the User       Data script executed successfully, and the Security Group is correctly allowing Port 80 traffic.
+
+<img width="1275" height="974" alt="image" src="https://github.com/user-attachments/assets/b6f0ade2-17b3-44e1-864d-79d3ff44a4df" />
+
