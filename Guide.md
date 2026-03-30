@@ -123,4 +123,7 @@ To verify that the outcome is working as expected:
 
 <img width="1191" height="527" alt="bruteforce" src="https://github.com/user-attachments/assets/0a68515f-a3af-42bc-8750-bf69acbfb907" />
 
+<img width="2559" height="797" alt="image" src="https://github.com/user-attachments/assets/fb7cf98d-b67d-416d-825c-d265cd713c53" />
+
+
 
