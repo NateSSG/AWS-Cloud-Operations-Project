@@ -376,13 +376,13 @@ aws sns subscribe --topic-arn $TOPIC_ARN --protocol lambda --notification-endpoi
 
 _To prove the automated defense system was fully operational, I conducted an end-to-end test._
 
-- I rapidly executed 5 failed SSH login attempts from an external machine (my laptop).
+1. I rapidly executed 5 failed SSH login attempts from an external machine (my laptop).
 
-- The CloudWatch Alarm correctly entered the In Alarm state.
+2. The CloudWatch Alarm correctly entered the In Alarm state.
 
-- The SNS Topic successfully triggered the Lambda function in the background.
+3.  The SNS Topic successfully triggered the Lambda function in the background.
 
-- When attempting to SSH into the server a final time, the terminal completely froze and returned a Timeout error, proving the network layer had dropped the connection.
+4.  When attempting to SSH into the server a final time, the terminal completely froze and returned a Timeout error, proving the network layer had dropped the connection.
 
 <img width="757" height="105" alt="my ip has been blocked" src="https://github.com/user-attachments/assets/091eb733-1f0f-48bd-a1f7-02311ef263cb" />
 
