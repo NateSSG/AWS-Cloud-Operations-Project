@@ -329,6 +329,9 @@ def lambda_handler(event, context):
     return {"status": "success", "blocked_ips": list(ips_to_block)}
 
 ```
+<img width="583" height="617" alt="autoblocker script code" src="https://github.com/user-attachments/assets/74825ffc-12c3-4344-8258-4b349ae16b52" />
+
+
 CLI Deployment Commands: 
 
 ```bash
@@ -368,6 +371,24 @@ aws sns subscribe --topic-arn $TOPIC_ARN --protocol lambda --notification-endpoi
 <img width="573" height="109" alt="image" src="https://github.com/user-attachments/assets/2d461d12-9944-4db0-b36c-813f4b23962c" />
 
 **What steps were taken to fix it?** I realized that AWS automatically creates a default "Allow All" rule in the Network ACL at Rule #100. Because my Python script was hardcoded to create the DENY rule at `rule_num = 100`, AWS rejected it. I updated the Python script to use `rule_num = 50`. Because Network ACLs evaluate rules in numerical order (lowest to highest), Rule 50 successfully intercepts and blocks the attacker before the default Rule 100 can allow them in. I then updated the Lambda function using `aws lambda update-function-code`.
+
+# Final Validation & Testing
+
+_To prove the automated defense system was fully operational, I conducted an end-to-end test._
+
+- I rapidly executed 5 failed SSH login attempts from an external machine (my laptop).
+
+- The CloudWatch Alarm correctly entered the In Alarm state.
+
+- The SNS Topic successfully triggered the Lambda function in the background.
+
+- When attempting to SSH into the server a final time, the terminal completely froze and returned a Timeout error, proving the network layer had dropped the connection.
+
+<img width="757" height="105" alt="my ip has been blocked" src="https://github.com/user-attachments/assets/091eb733-1f0f-48bd-a1f7-02311ef263cb" />
+
+<img width="992" height="222" alt="ip blocked on the dashboard" src="https://github.com/user-attachments/assets/41dc57c7-3924-4a91-9bed-6bad8825657d" />
+
+<img width="551" height="103" alt="blocked my ip now" src="https://github.com/user-attachments/assets/ff98bf90-c450-44e6-a4f5-44fca7f61a01" />
 
 
 
