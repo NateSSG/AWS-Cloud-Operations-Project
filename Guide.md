@@ -240,6 +240,137 @@ To verify the Intrustion Detection System was fully operational, I simulated and
 
 <img width="2559" height="797" alt="image" src="https://github.com/user-attachments/assets/fb7cf98d-b67d-416d-825c-d265cd713c53" />
 
+# Chapter 4: Architectural Enhancements & Cloud Governance
+
+After successfully deploying the base Intrusion Detection System (Phase 1 & 2), I analyzed the architecture for potential improvements aligned with the AWS Well-Architected Framework. 
+
+### Proposed Enhancements:
+1. **Security & Governance (Automated Incident Response - SOAR):** Instead of just alerting the administrator via email when an attack occurs, the architecture can be enhanced to become "self-healing." By integrating an AWS Lambda function, the system can automatically parse logs, extract the attacker's IP, and inject a `DENY` rule into the VPC Network ACL.
+2. **Cost Optimization:** To ensure the lab budget is preserved, I utilized the AWS Pricing Calculator to estimate costs and regularly checked **AWS Trusted Advisor** to identify and terminate idle EC2 instances when not actively testing.
+3. **Resiliency (Automated Backups):** A potential future enhancement is utilizing Amazon Data Lifecycle Manager (DLM) to take automated daily EBS Snapshots of the web server. If an attacker successfully breached and corrupted the server before the auto-blocker fired, the server could be instantly restored.
+
+For this project, I chose to implement **Enhancement 1: Automated Incident Response (The Auto-Blocker)**, as it provides the highest level of security automation and directly improves cloud governance.
+
+---
+
+# Chapter 5: Enhancement Implementation (The Auto-Blocker)
+
+## 1. Architecture & Workflow
+The goal of this enhancement is to transition from an Intrusion *Detection* System (IDS) to an Intrusion *Prevention* System (IPS). 
+1. The **CloudWatch Alarm** (`SSH-BruteForce-Alert`) triggers after 3 failed logins in 60 seconds.
+2. The Alarm sends a message to the **SNS Topic**.
+3. The SNS Topic invokes a custom **AWS Lambda Function** (`AutoBlocker`) written in Python.
+4. The Lambda function queries the CloudWatch Logs (`/var/log/secure`), uses Regular Expressions (Regex) to extract the attacker's IP address, and uses the `boto3` SDK to update the VPC **Network ACL**, instantly dropping all traffic from the attacker.
+
+## 2. Infrastructure as Code (Deployment)
+The Lambda function was packaged and deployed entirely via the AWS CLI in CloudShell. 
+
+**The Python Script (ChatGPT) (`autoblocker.py`):**
+```python
+import boto3
+import time
+import re
+
+def lambda_handler(event, context):
+    logs_client = boto3.client('logs')
+    ec2_client = boto3.client('ec2')
+
+    print("Alert received! Scanning logs for attacker IP...")
+    
+    # 1. Query the last 5 minutes of logs
+    end_time = int(time.time() * 1000)
+    start_time = end_time - (5 * 60 * 1000)
+
+    try:
+        response = logs_client.filter_log_events(
+            logGroupName='/var/log/secure',
+            filterPattern='"Invalid user"',
+            startTime=start_time,
+            endTime=end_time
+        )
+    except Exception as e:
+        print(f"Error reading logs: {e}")
+        return
+
+    # 2. Extract the IP address
+    ips_to_block = set()
+    for event in response.get('events', []):
+        match = re.search(r'from\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)', event['message'])
+        if match:
+            ips_to_block.add(match.group(1))
+
+    if not ips_to_block:
+        return {"status": "success", "message": "No IPs found."}
+
+    # 3. Find the Default Network ACL
+    vpcs = ec2_client.describe_vpcs(Filters=[{'Name': 'isDefault', 'Values': ['true']}])
+    vpc_id = vpcs['Vpcs'][0]['VpcId']
+    nacls = ec2_client.describe_network_acls(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+    nacl_id = nacls['NetworkAcls'][0]['NetworkAclId']
+
+    # 4. Inject the DENY rule
+    rule_num = 50 
+    for ip in ips_to_block:
+        try:
+            ec2_client.create_network_acl_entry(
+                NetworkAclId=nacl_id,
+                RuleNumber=rule_num,
+                Protocol='-1', 
+                RuleAction='deny',
+                Egress=False, 
+                CidrBlock=f"{ip}/32",
+                PortRange={'From': 0, 'To': 65535}
+            )
+            print(f"SUCCESS: Blocked Hacker IP -> {ip}")
+            rule_num += 1
+        except Exception as e:
+            print(f"Failed to block {ip}. AWS Error: {e}")
+
+    return {"status": "success", "blocked_ips": list(ips_to_block)}
+
+```
+CLI Deployment Commands: 
+
+```bash
+# Zip the code and create the Lambda using the Learner Lab Role
+zip function.zip autoblocker.py
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+aws lambda create-function \
+    --function-name AutoBlocker \
+    --runtime python3.9 \
+    --role arn:aws:iam::$ACCOUNT_ID:role/LabRole \
+    --handler autoblocker.lambda_handler \
+    --zip-file fileb://function.zip \
+    --timeout 15
+
+# Connect SNS to Lambda
+TOPIC_ARN=$(aws sns list-topics --query "Topics[?contains(TopicArn, 'SecurityAlerts')].TopicArn" --output text)
+LAMBDA_ARN=$(aws lambda get-function --function-name AutoBlocker --query 'Configuration.FunctionArn' --output text)
+
+aws lambda add-permission --function-name AutoBlocker --statement-id sns-invoke --action "lambda:InvokeFunction" --principal sns.amazonaws.com --source-arn $TOPIC_ARN
+aws sns subscribe --topic-arn $TOPIC_ARN --protocol lambda --notification-endpoint $LAMBDA_ARN
+```
+## 3. Troubleshooting & Learnings
+### Issue: The Lambda executed, but the attacker was not blocked.
+
+<img width="815" height="761" alt="alarm was triggered" src="https://github.com/user-attachments/assets/c1d781a4-a841-464e-b877-c9b8448278ad" />
+
+<img width="985" height="396" alt="permission denied" src="https://github.com/user-attachments/assets/1e49801f-9dc8-413e-84f8-8fbc04090979" />
+
+**What went wrong?** During the initial test, the attack triggered the alarm, but my attacking machine still received a "Permission denied" response from the server, indicating the firewall was still open.
+
+
+<img width="1020" height="581" alt="lambda log error" src="https://github.com/user-attachments/assets/b6864a9e-8f8f-416e-bda3-1da053b0c9a2" />
+
+**How did I diagnose the issue?** I opened the CloudWatch Logs for the Lambda function `(/aws/lambda/AutoBlocker)` to read the execution output. I found this specific error message: `Skipped [My IP] (Rule might already exist)`.
+
+<img width="573" height="109" alt="image" src="https://github.com/user-attachments/assets/2d461d12-9944-4db0-b36c-813f4b23962c" />
+
+**What steps were taken to fix it?** I realized that AWS automatically creates a default "Allow All" rule in the Network ACL at Rule #100. Because my Python script was hardcoded to create the DENY rule at `rule_num = 100`, AWS rejected it. I updated the Python script to use `rule_num = 50`. Because Network ACLs evaluate rules in numerical order (lowest to highest), Rule 50 successfully intercepts and blocks the attacker before the default Rule 100 can allow them in. I then updated the Lambda function using `aws lambda update-function-code`.
+
+
+
 ## Sources
 - <a href="https://docs.aws.amazon.com/cli/latest/">AWS CLI commands</a>
 - <a href="https://docs.aws.amazon.com/">AWS Docs</a>
