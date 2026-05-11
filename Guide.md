@@ -52,7 +52,7 @@ yum update -y
 yum install -y httpd amazon-cloudwatch-agent
 systemctl start httpd
 systemctl enable httpd
-echo "<html><body style='font-family: Arial; text-align: center; margin-top: 50px;'><h1>⚠️ Victim Web Server Running ⚠️</h1><p>Phase 1 Infrastructure is successfully deployed!</p></body></html>" > /var/www/html/index.html
+echo "<html><body style='font-family: Arial; text-align: center; margin-top: 50px;'><h1> Victim Web Server Running </h1><p>Phase 1 Infrastructure is successfully deployed!</p></body></html>" > /var/www/html/index.html
 EOF
 ```
 ### Step 4: Fetch the Latest Amazon Linux AMI
@@ -97,9 +97,9 @@ To verify that the outcome is working as expected:
 - I pasted the IP address into a standard web browser over HTTP (e.g., http://3.93.167.231).
 - The custom "Victim Web Server Running" HTML page loaded successfully, proving that the EC2 instance booted, the User       Data script executed successfully, and the Security Group is correctly allowing Port 80 traffic.
 
-<img width="1275" height="974" alt="image" src="https://github.com/user-attachments/assets/b6f0ade2-17b3-44e1-864d-79d3ff44a4df" />
+<img width="1274" height="400" alt="image" src="https://github.com/user-attachments/assets/a583bfda-d05f-4f40-8fab-3e3e4b50a46b" />
 
-<img width="1161" height="909" alt="image" src="https://github.com/user-attachments/assets/15330f6d-3920-4d0f-845f-aa2a3de3bb31" />
+
 
 # Phase 2: Cloud Governance and Monitoring (Intrusion Detection System)
 
